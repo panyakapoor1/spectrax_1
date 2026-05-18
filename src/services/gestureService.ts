@@ -5,7 +5,7 @@ export interface GestureResult {
   rightWristAboveShoulder: boolean;
   isPoseLost: boolean;
   isThumbsUp?: boolean;
-  isCrossedArms?: boolean;
+  isCrossedArms: boolean;
 }
 
 const VISIBILITY_THRESHOLD = 0.5;
