@@ -39,7 +39,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   onApplyRecovery,
   onDiscardRecovery,
 }) => {
-  const theme = 'dark';
+  const { theme } = useTheme();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
   const [isMobile, setIsMobile] = useState(window.innerWidth < 640);

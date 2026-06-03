@@ -701,6 +701,11 @@ export const Replay3DModel: React.FC<Replay3DModelProps> = ({
 
   // Keep refs in sync with state for use inside animation loop
 
+  const isPlaying = externalIsPlaying !== undefined ? externalIsPlaying : _isPlaying;
+  const currentFrameIdx = externalFrameIdx !== undefined ? externalFrameIdx : _currentFrameIdx;
+  const setIsPlaying = onPlayToggle ? () => onPlayToggle() : _setIsPlaying;
+  const setCurrentFrameIdx = onFrameChange ? onFrameChange : _setCurrentFrameIdx;
+
   useEffect(() => {
     graphicsPresetRef.current = graphicsPreset;
   }, [graphicsPreset]);
@@ -710,22 +715,6 @@ export const Replay3DModel: React.FC<Replay3DModelProps> = ({
   useEffect(() => {
     if (!isPlaying) frameFloatRef.current = currentFrameIdx;
   }, [currentFrameIdx, isPlaying]);
-
-
-
-
-
-
-
-  const isPlaying =
-    externalIsPlaying !== undefined ? externalIsPlaying : _isPlaying;
-  const currentFrameIdx =
-    externalFrameIdx !== undefined ? externalFrameIdx : _currentFrameIdx;
-  const setIsPlaying = onPlayToggle ? () => onPlayToggle() : _setIsPlaying;
-  const setCurrentFrameIdx = onFrameChange
-    ? onFrameChange
-    : _setCurrentFrameIdx;
-
 
   // Three.js refs
   const sceneRef    = useRef<THREE.Scene | null>(null);
@@ -742,6 +731,7 @@ export const Replay3DModel: React.FC<Replay3DModelProps> = ({
   const bonesRef  = useRef<{ line: THREE.Line; startIdx: number; endIdx: number }[]>([]);
   const axesRef   = useRef<THREE.AxesHelper[]>([]);
   const gridRef = useRef<THREE.GridHelper | null>(null);
+  const gridTargetRef = useRef<THREE.Vector3>(new THREE.Vector3());
 
   // GLTF refs
 
@@ -1785,8 +1775,7 @@ export const Replay3DModel: React.FC<Replay3DModelProps> = ({
         return;
       }
 
-
-
+      const frame = frames[Math.round(renderFloat) % frames.length] || frames[0];
       const { baseColor, badJoints, mistakeColor } = parseFeedback(
         frame.feedback,
       );

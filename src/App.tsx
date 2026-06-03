@@ -10,6 +10,7 @@ import { useTheme } from "./context/ThemeContext";
 import HistoryPage from "./HistoryPage";
 import { useLeveling } from "./hooks/useLeveling";
 import { SummaryScreenSkeleton } from "./components/SummaryScreenSkeleton";
+import { GridSkeleton } from "./components/CardSkeleton";
 import { useAuth } from "./context/AuthContext";
 import { LoginScreen } from "./components/LoginScreen";
 import { SignUpScreen } from "./components/SignUpScreen";

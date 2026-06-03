@@ -17,11 +17,10 @@ import { useWorkoutSync } from '../hooks/useWorkoutSync';
 import { useDisplayConfig } from '../hooks/useDisplayConfig';
 import { useWorkoutWebSocket } from '../hooks/useWorkoutWebSocket';
 import { useOffscreenCanvas } from '../hooks/useOffscreenCanvas';
-import { FocusPanel, TimerPanel, RepsPanel, EnginePanel, SensePanel } from './WorkoutPanels';
+import { FocusPanel, TimerPanel, RepsPanel, EnginePanel, SensePanel, AngleDialPanel } from './WorkoutPanels';
 import { ghostService } from '../services/ghostService';
 import type { GhostStats } from '../services/ghostService';
 import { useThrottleLevel } from '../services/performanceThrottleService';
-import type { FrameData } from '../services/sessionRecorder';
 import { FpsMonitor } from './FpsMonitor';
 import { CameraErrorBoundary } from './CameraErrorBoundary';
 import { gestureService, GestureCommand } from '../services/gestureService';
@@ -51,6 +50,7 @@ interface WorkoutScreenProps {
   onAutoDetect?: (key: string) => void;
   bodyType?: BodyType;
   adaptiveFactor?: number;
+  onSnapshotUpdate?: (liveStats: any) => void;
 }
 
 type WorkoutPanelId = "focus" | "timer" | "reps" | "engine" | "sense" | "dial";
@@ -181,6 +181,7 @@ export const WorkoutScreen: React.FC<WorkoutScreenProps> = ({ exercise, onEnd, o
 
   const panelRefsById = panelRefs.current;
   const [panelsLocked, setPanelsLocked] = useState(true);
+  const [currentAngle, setCurrentAngle] = useState(0);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [panelPositions, setPanelPositions] = useState<PanelPositions>(() => getStoredPanelPositions());
   const [showExitModal, setShowExitModal] = useState(false);
