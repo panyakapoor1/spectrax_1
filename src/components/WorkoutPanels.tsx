@@ -77,6 +77,43 @@ export const SensePanel = ({ clipEngine, clipResult }: { clipEngine: any, clipRe
   )
 );
 
+export const RiskPanel = ({
+  riskIndex,
+  fatigueIndex,
+  asymmetryScore,
+  recommendedStopRep,
+}: {
+  riskIndex: number;
+  fatigueIndex: number;
+  asymmetryScore: number;
+  recommendedStopRep: number | null;
+}) => {
+  const riskColor = riskIndex >= 75 ? "var(--neon-red)" : riskIndex >= 50 ? "var(--neon-yellow)" : "var(--neon-green)";
+  const riskLabel = riskIndex >= 75 ? "HIGH RISK" : riskIndex >= 50 ? "ELEVATED" : "LOW RISK";
+
+  return (
+    <div className="glass workout-stat-card workout-risk-panel animate-in" style={{ borderLeft: `3px solid ${riskColor}` }}>
+      <div style={{ fontSize: '0.65rem', color: 'var(--text-dim)', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '8px' }}>
+        Injury Risk Index
+      </div>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '4px' }}>
+        <span style={{ fontFamily: 'var(--font-heading)', color: riskColor, fontSize: '2rem', fontWeight: 900 }}>
+          {riskIndex}
+        </span>
+        <span style={{ fontSize: '0.75rem', color: riskColor, fontWeight: 700 }}>/ 100</span>
+      </div>
+      <div style={{ fontSize: '0.7rem', color: riskColor, fontWeight: 700, marginBottom: '8px' }}>
+        {riskLabel}
+      </div>
+      <div style={{ display: 'flex', gap: '12px', fontSize: '0.65rem', color: 'var(--text-dim)' }}>
+        <span>FATIGUE: {fatigueIndex}</span>
+        <span>ASYM: {asymmetryScore}</span>
+      </div>
+      {recommendedStopRep !== null && (
+        <div style={{ marginTop: '8px', fontSize: '0.7rem', color: 'var(--neon-red)', fontWeight: 700, background: 'rgba(255,34,85,0.1)', padding: '4px 8px', borderRadius: '4px' }}>
+          STOP AT REP {recommendedStopRep}
+        </div>
+      )}
 export const TutPanel = ({
   tutMetrics,
   statusColor,

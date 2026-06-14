@@ -6,6 +6,9 @@ export interface FrameData {
   angles: Record<string, number>;
   feedback: string;
   exercise: string;
+  riskScore?: number;
+  fatigueIndex?: number;
+  asymmetryScore?: number;
 }
 
 type LandmarkCoordinate = "x" | "y" | "z" | "visibility";
@@ -31,6 +34,7 @@ export interface SessionArchive {
   frameCount: number;
   generatedAt: number;
   frames: CompressedFrameChunk[];
+  riskTimeline?: Array<{ timestamp: number; riskIndex: number; fatigueIndex: number; asymmetryScore: number }>;
 }
 
 
@@ -333,6 +337,7 @@ class SessionRecorder {
 
   private lastCentroid: { x: number; y: number } | null = null;
   private displacements: number[] = [];
+  private riskTimeline: Array<{ timestamp: number; riskIndex: number; fatigueIndex: number; asymmetryScore: number }> = [];
 
   start() {
     this.compressedFrames = [];
@@ -340,6 +345,7 @@ class SessionRecorder {
     this.lastRawFrame = null;
     this.lastCentroid = null;
     this.displacements = [];
+    this.riskTimeline = [];
     telemetryBroker.logState("SessionRecorder_Start");
   }
   recordFrame(frame: FrameData) {
@@ -402,6 +408,7 @@ class SessionRecorder {
       frameCount: this._frameCount,
       generatedAt: Date.now(),
       frames: [...this.compressedFrames],
+      riskTimeline: [...this.riskTimeline],
     };
   }
 
@@ -421,6 +428,7 @@ class SessionRecorder {
         ? archive.frameCount
         : RLDCompressionDriver.decompress(this.compressedFrames).length;
     this.lastRawFrame = this.frames[this.frames.length - 1] || null;
+    this.riskTimeline = archive.riskTimeline ? [...archive.riskTimeline] : [];
   }
 
   private getCentroid(landmarks: any[]) {
@@ -438,6 +446,13 @@ class SessionRecorder {
       x: x / landmarks.length,
       y: y / landmarks.length,
     };
+  }
+
+  recordRisk(riskSnapshot: { timestamp: number; riskIndex: number; fatigueIndex: number; asymmetryScore: number }) {
+    this.riskTimeline.push(riskSnapshot);
+    if (this.riskTimeline.length > 5000) {
+      this.riskTimeline.shift();
+    }
   }
 
   getStabilityReport() {
