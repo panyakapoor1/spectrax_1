@@ -22,7 +22,8 @@ import { FocusPanel, TimerPanel, RepsPanel, EnginePanel, SensePanel, AngleDialPa
 import { ghostService } from '../services/ghostService';
 import type { GhostStats } from '../services/ghostService';
 import { useThrottleLevel } from '../services/performanceThrottleService';
-import { injuryRiskEngine } from '../services/injuryRiskEngine';
+import { DepthEstimationEngine } from '../services/depthEstimationEngine';
+import { reconstruct3DMesh } from '../services/mesh3DEngine';
 import { FpsMonitor } from './FpsMonitor';
 import { CameraErrorBoundary } from './CameraErrorBoundary';
 import { gestureService, GestureCommand } from '../services/gestureService';
@@ -262,6 +263,7 @@ export const WorkoutScreen: React.FC<WorkoutScreenProps> = ({ exercise, onEnd, o
   });
   const [panelPositions, setPanelPositions] = useState<PanelPositions>(() => getStoredPanelPositions());
   const [showExitModal, setShowExitModal] = useState(false);
+  const [depth3DEnabled, setDepth3DEnabled] = useState(false);
   const { config: displayConfig, updateConfig: updateDisplayConfig } = useDisplayConfig();
   const [seconds, setSeconds] = useState(0);
   const [vlmProgress, setVlmProgress] = useState(0);
@@ -597,10 +599,22 @@ export const WorkoutScreen: React.FC<WorkoutScreenProps> = ({ exercise, onEnd, o
   useWorkoutWebSocket();
 
 
+  const depthEngineRef = useRef<DepthEstimationEngine | null>(null);
+  const lastDepthMapRef = useRef<any>(null);
+
   const handlePoseResults = useCallback(async (results: any) => {
     // ── SINGLE USER LOCK: Filter out erratic detections or second people ──
     const filteredResults = poseLockService.filter(results);
     if (!filteredResults || !filteredResults.poseLandmarks) return;
+
+    if (depth3DEnabled && videoRef.current && depthEngineRef.current) {
+      const video = videoRef.current;
+      depthEngineRef.current.processFrame(video, (depthResult) => {
+        if (depthResult) {
+          lastDepthMapRef.current = depthResult;
+        }
+      });
+    }
 
     // Calculate primary joint angle on every frame for real-time dial updates
     const currentFrameAngles = getJointAngles(results.poseLandmarks);
@@ -772,6 +786,20 @@ export const WorkoutScreen: React.FC<WorkoutScreenProps> = ({ exercise, onEnd, o
 
     // 5. Rendering (Main thread fallback if OffscreenCanvas disabled)
     if (!offscreenEnabledRef.current) {
+      if (depth3DEnabled && lastDepthMapRef.current && videoRef.current) {
+        const video = videoRef.current;
+        const { meshVertices } = reconstruct3DMesh(
+          results.poseLandmarks,
+          lastDepthMapRef.current,
+          video.videoWidth || 1280,
+          video.videoHeight || 720
+        );
+        overlayRenderer.setMeshVertices(meshVertices);
+        overlayRenderer.set3DEnabled(true);
+      } else {
+        overlayRenderer.set3DEnabled(false);
+        overlayRenderer.setMeshVertices(null);
+      }
       overlayRenderer.draw(results, nextState.status, primaryJoints);
     }
   }, [exercise]);
@@ -844,6 +872,10 @@ export const WorkoutScreen: React.FC<WorkoutScreenProps> = ({ exercise, onEnd, o
       if (!videoRef.current || !canvasRef.current) return;
 
       try {
+        const depthEngine = new DepthEstimationEngine();
+        await depthEngine.init();
+        depthEngineRef.current = depthEngine;
+
         const canvasEl = canvasRef.current as any;
         initOffscreenCanvas(canvasEl, worker);
 
@@ -877,6 +909,8 @@ export const WorkoutScreen: React.FC<WorkoutScreenProps> = ({ exercise, onEnd, o
       isMountedRef.current = false;
       stopSystem();
       worker.terminate();
+      depthEngineRef.current?.destroy();
+      depthEngineRef.current = null;
       clearInterval(timerRef);
       gestureService.reset();
       exerciseEngine.reset();
@@ -1270,6 +1304,13 @@ export const WorkoutScreen: React.FC<WorkoutScreenProps> = ({ exercise, onEnd, o
           onClick={() => updateDisplayConfig({ fpsDisplay: !displayConfig.fpsDisplay })}
         >
           {displayConfig.fpsDisplay ? 'Hide FPS' : 'Show FPS'}
+        </button>
+        <button
+          type="button"
+          className={`workout-lock-toggle ${depth3DEnabled ? 'is-locked' : 'is-unlocked'}`}
+          onClick={() => setDepth3DEnabled((prev) => !prev)}
+        >
+          {depth3DEnabled ? '3D Mesh: ON' : '3D Mesh: OFF'}
         </button>
       </div>
 
