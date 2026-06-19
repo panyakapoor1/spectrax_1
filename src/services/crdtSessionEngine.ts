@@ -191,8 +191,8 @@ export class CRDTSessionEngine {
     engine.startTime = (yState.get("startTime") as number) || engine.startTime;
 
     // Restore HLC vector
-    const hlcVectorRaw = yState.get("hlcVector") || {};
-    engine.hlcVector = engine.parseHlcVector(hlcVectorRaw as Record<string, string>);
+    const hlcVectorRaw = (yState.get("hlcVector") as Record<string, string>) || {};
+    engine.hlcVector = engine.parseHlcVector(hlcVectorRaw);
 
     // Re-attach update handler
     engine.updateHandler = (update: Uint8Array) => {
