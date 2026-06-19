@@ -178,8 +178,8 @@ export class CRDTSessionEngine {
 
     const yState = doc.getMap("state");
     const engine = new CRDTSessionEngine(
-      yState.get("exerciseKey") || "unknown",
-      yState.get("exerciseName") || "Unknown"
+      (yState.get("exerciseKey") as string) || "unknown",
+      (yState.get("exerciseName") as string) || "Unknown"
     );
 
     // Replace the new doc with the received state
@@ -187,12 +187,12 @@ export class CRDTSessionEngine {
     engine.doc = doc;
     engine.yState = yState;
     engine.yReps = doc.getArray("reps");
-    engine.sessionId = yState.get("sessionId") || engine.sessionId;
-    engine.startTime = yState.get("startTime") || engine.startTime;
+    engine.sessionId = (yState.get("sessionId") as string) || engine.sessionId;
+    engine.startTime = (yState.get("startTime") as number) || engine.startTime;
 
     // Restore HLC vector
     const hlcVectorRaw = yState.get("hlcVector") || {};
-    engine.hlcVector = engine.parseHlcVector(hlcVectorRaw);
+    engine.hlcVector = engine.parseHlcVector(hlcVectorRaw as Record<string, string>);
 
     // Re-attach update handler
     engine.updateHandler = (update: Uint8Array) => {
@@ -340,7 +340,7 @@ export async function listActiveSessions(): Promise<{ sessionId: string; lastUpd
           const yState = doc.getMap("state");
           sessions.push({
             sessionId: value.sessionId,
-            lastUpdate: yState.get("lastUpdate") || 0,
+            lastUpdate: (yState.get("lastUpdate") as number) || 0,
           });
           cursor.continue();
         } else {

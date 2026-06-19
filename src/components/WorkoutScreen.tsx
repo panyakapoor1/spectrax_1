@@ -17,6 +17,7 @@ import { useWorkoutSync } from '../hooks/useWorkoutSync';
 import { useDisplayConfig } from '../hooks/useDisplayConfig';
 import { useWorkoutWebSocket } from '../hooks/useWorkoutWebSocket';
 import { useOffscreenCanvas } from '../hooks/useOffscreenCanvas';
+import { injuryRiskEngine } from '../services/injuryRiskEngine';
 import { FocusPanel, TimerPanel, RepsPanel, EnginePanel, SensePanel, AngleDialPanel, RiskPanel, TutPanel } from './WorkoutPanels';
 import { ghostService } from '../services/ghostService';
 import type { GhostStats } from '../services/ghostService';
@@ -38,6 +39,7 @@ const createPoseWorker = () =>
 
 interface WorkoutScreenProps {
   exercise: ExerciseConfig;
+  onCancel?: () => void;
   onEnd: (stats: {
     reps: number;
     totalReps: number;
@@ -1342,6 +1344,8 @@ export const WorkoutScreen: React.FC<WorkoutScreenProps> = ({ exercise, onEnd, o
           onClick={handleHandoff}
         >
           📱 Handoff
+        </button>
+        <button
           className={`workout-lock-toggle ${depth3DEnabled ? 'is-locked' : 'is-unlocked'}`}
           onClick={() => setDepth3DEnabled((prev) => !prev)}
         >
